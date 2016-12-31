@@ -14,6 +14,40 @@ The goals / steps of this project are the following:
 
 ---
 
-The images for camera calibration are stored in the folder called `camera_cal`.  The images in `test_images` are for testing your pipeline on single frames.  The video called `project_video.mp4` is the video your pipeline should work well on.  `challenge_video.mp4` is an extra (and optional) challenge for you if you want to test your pipeline.
+Much of the steps with corresponding images can be found and better explained in the notebook. But the steps
+taken to find the lane linds can be summarized as followed.
 
-If you're feeling ambitious (totally optional though), don't stop there!  We encourage you to go out and take video of your own, calibrate your camera and show us how you would implement this project from scratch!
+1) Calculated the calibration matrix and distortion coefficients using the images found in camera_cal.
+
+2) Defined functions for applying a sobel X/Y, magnitiude, and direction threshold, and HLS thresholds. I found
+my best results combined a (50, 100) threshold in the X direction and a (120, 255) threshold for the S value
+in the HLS image.
+
+3) Calibrated a perspecitve transform by taking the solidYellowLeft image in test_images/. I picked four points
+along the lanes and picked four more points on the transformed image such that the line was straight.
+
+4) I applied two mask to the image, the first filtering out the image outside the lane, the second filtering
+inside the lane.
+
+5) From here I got all the points along the left side of the image, and all the points along the right side
+and got a second-degree polynomial to fit a line for each lane.
+
+6) I then drew the lane lines onto the warped image then unwarped the image.
+
+All the previous are the steps for a single image, when processing a video we do some additional steps.
+
+7) Apply so rules such that the curvature or the two lanes is within a normal range (within 30%) of each
+other. If not then we don't consider it a detected line.
+
+8) Only add a new line if the fit is on the same order of magnitude as the previous. I put a huge percentage
+50,000% minimum difference. While this was extreme it kept most lines while getting rid of frames with huge
+errors.
+
+9) Smoothed each frame by taking the average of the lines in the previous 5 frames. This kept the lines from
+jumping around each frame while still allowing it to adapt quickly to new roads/curves.
+
+### Limitations
+
+This would not work under very dark lighting conditions as we might be able to detect lines as well. It also
+would not work in the cases with unusual line markings. An example of this could be a street with a curb as a
+lane marking. It also would break down in the case where we move the car into a different lane.
